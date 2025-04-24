@@ -1,0 +1,85 @@
+import { sleep, group } from 'k6'
+import http from 'k6/http'
+
+export const options = {
+  cloud: {
+    distribution: { 'amazon:us:ashburn': { loadZone: 'amazon:us:ashburn', percent: 100 } },
+    apm: [],
+  },
+  thresholds: {},
+  scenarios: {
+    spike_to_25_VUs: {
+      executor: 'constant-vus',
+      gracefulStop: '0s',
+      duration: '1m',
+      vus: 25,
+      exec: 'spike_to_25_VUs',
+    },
+    spike_to_100_VUs: {
+      executor: 'constant-vus',
+      startTime: '20s',
+      gracefulStop: '0s',
+      duration: '40s',
+      vus: 75,
+      exec: 'spike_to_100_VUs',
+    },
+  },
+}
+
+// Scenario: spike_to_25_VUs (executor: constant-vus)
+
+export function spike_to_25_VUs() {
+  let response
+
+  group('page_1 - http://35.173.239.86/', function () {
+    response = http.get('http://35.173.239.86/', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+    sleep(3.2)
+    response = http.get('http://35.173.239.86/?ajax=true', {
+      headers: {
+        'content-type': 'application/json',
+      },
+    })
+    sleep(2.4)
+  })
+
+  group('page_2 - http://35.173.239.86/striped-cotton-sweater', function () {
+    response = http.get('http://35.173.239.86/striped-cotton-sweater', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+  })
+}
+
+// Scenario: spike_to_100_VUs (executor: constant-vus)
+
+export function spike_to_100_VUs() {
+  let response
+
+  group('page_1 - http://35.173.239.86/', function () {
+    response = http.get('http://35.173.239.86/', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+    sleep(3.2)
+    response = http.get('http://35.173.239.86/?ajax=true', {
+      headers: {
+        'content-type': 'application/json',
+      },
+    })
+    sleep(2.4)
+  })
+
+  group('page_2 - http://35.173.239.86/striped-cotton-sweater', function () {
+    response = http.get('http://35.173.239.86/striped-cotton-sweater', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+  })
+}
