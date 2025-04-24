@@ -1,0 +1,131 @@
+import { sleep, group } from 'k6'
+import http from 'k6/http'
+
+export const options = {
+  cloud: {
+    distribution: { 'amazon:us:ashburn': { loadZone: 'amazon:us:ashburn', percent: 100 } },
+    apm: [],
+  },
+  thresholds: {},
+  scenarios: {
+    checkout: {
+      executor: 'constant-vus',
+      gracefulStop: '0s',
+      duration: '2m',
+      vus: 25,
+      exec: 'checkout',
+    },
+    browsing: {
+      executor: 'constant-vus',
+      gracefulStop: '0s',
+      duration: '2m',
+      vus: 25,
+      exec: 'browsing',
+    },
+  },
+}
+
+// Scenario: checkout (executor: constant-vus)
+
+export function checkout() {
+  let response
+
+  const vars = {}
+
+  group('page_1 - http://35.173.239.86/', function () {
+    response = http.get('http://35.173.239.86/', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+    sleep(2.7)
+    response = http.get('http://35.173.239.86/', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+    sleep(4.4)
+    response = http.get('http://35.173.239.86/?ajax=true', {
+      headers: {
+        'content-type': 'application/json',
+      },
+    })
+    sleep(1.5)
+  })
+
+  group('page_2 - http://35.173.239.86/striped-cotton-sweater', function () {
+    response = http.get('http://35.173.239.86/striped-cotton-sweater', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+
+    vars['sku1'] = response.html().find('input[name=sku]').first().attr('value')
+
+    sleep(2)
+
+    response = http.post(
+      'http://35.173.239.86/api/cart/mine/items',
+      `{"sku":"${vars['sku1']}","qty":"1"}`,
+      {
+        headers: {
+          'content-type': 'application/json',
+          'x-requested-with': 'XMLHttpRequest',
+        },
+      }
+    )
+    sleep(2)
+  })
+
+  group('page_3 - http://35.173.239.86/cart', function () {
+    response = http.get('http://35.173.239.86/cart', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+    sleep(2.4)
+  })
+
+  group('page_4 - http://35.173.239.86/checkout', function () {
+    response = http.get('http://35.173.239.86/checkout', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+    sleep(0.7)
+    response = http.get('http://35.173.239.86/api/paymentMethods', {
+      headers: {
+        accept: 'application/json, text/plain, */*',
+      },
+    })
+  })
+}
+
+// Scenario: browsing (executor: constant-vus)
+
+export function browsing() {
+  let response
+
+  group('page_1 - http://35.173.239.86/', function () {
+    response = http.get('http://35.173.239.86/', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+    sleep(3.2)
+    response = http.get('http://35.173.239.86/?ajax=true', {
+      headers: {
+        'content-type': 'application/json',
+      },
+    })
+    sleep(2.4)
+  })
+
+  group('page_2 - http://35.173.239.86/striped-cotton-sweater', function () {
+    response = http.get('http://35.173.239.86/striped-cotton-sweater', {
+      headers: {
+        'upgrade-insecure-requests': '1',
+      },
+    })
+  })
+}
